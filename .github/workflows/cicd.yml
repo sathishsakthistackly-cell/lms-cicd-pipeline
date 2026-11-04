@@ -21,9 +21,10 @@ jobs:
           distribution: temurin
           java-version: '21'
           cache: maven
+          cache-dependency-path: Spring-Boot-LMS-sample-app/pom.xml
 
       - name: Build application
-        run: mvn clean package -DskipTests
+        run: mvn -f Spring-Boot-LMS-sample-app/pom.xml clean package -DskipTests
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -31,22 +32,22 @@ jobs:
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          username: sakthisakti
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
-          context: .
+          context: ./Spring-Boot-LMS-sample-app
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/lms-app:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/lms-app:${{ github.sha }}
+            sakthisakti/lms-app:latest
+            sakthisakti/lms-app:${{ github.sha }}
 
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.2.0
         env:
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_USERNAME: sakthisakti
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -55,4 +56,4 @@ jobs:
           envs: DOCKERHUB_USERNAME,DOCKERHUB_TOKEN
           script: |
             echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-            /opt/lms-deployment/deploy.sh
+            bash /opt/lms-deployment/deploy.sh
